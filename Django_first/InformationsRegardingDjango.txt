@@ -1,0 +1,405 @@
+We use 'python manage.py runserver' to start the local server
+
+Here in the project we have a app created as 'blog' inside the main directory. So accordingly our route URLs
+need to be set in order to move to those specific files. One directory 'urls.py' is used for the whole
+directory and other 'urls.py' is being used inside our app 'blog'. So the hosted application will first come
+to our directory urls and search for the routes defined in the URL of localhost. if it's blank it will lead to
+the home page by default as per the 'include' keyword's arguments. And it will search the methods written in
+views file to execute the code.
+
+How a Django learns about the html file inside our app?
+Django always search for the 'templates' folder and inside the template folder again it searches for a folder
+having the app name and inside that for html file.
+So in this project we have created like, blog -> templates -> blog -> '.html'
+
+
+You need to add the 'BlogConfig' class from the 'apps.py' file of blog app to the settings.py in the project directory to
+installed apps list in order to give command to Django to recognize the templates of Blog app. Whatever apps
+you will create you need to add them in this in order to let Django know about the existing apps templates.
+
+
+Now we are trying to change the code to show some information over the page rather than having ony some static
+data.
+
+We have made an experiment for title as well by not giving any title to 'Home.html' and giving a title to
+'about.html'
+
+Now we are seeing many codes are repeated in both of the html files which is common to both of them so if
+we need to change something in those common codes, then we need to change everywhere and for large projects
+that might be an issue. So we are going to use a 'base.html' page in order to have all the repeated codes in
+one single html page so that changes can be implemented swiftly.
+
+We copied the code from bootstrap starter page and pasted in our 'base.html' page to give some style to our
+html pages.
+
+Copied the html codes from navigation.html of Corey Scrafer's github link given below and pasted in base.html
+https://github.com/CoreyMSchafer/code_snippets/blob/master/Django_Blog/snippets/navigation.html
+
+Now copy the main.html file and paste in base.html removing the earlier code given below.
+ <div class="container">
+        {% block content%}{% endblock %}
+    </div>
+    copied from https://github.com/CoreyMSchafer/code_snippets/blob/master/Django_Blog/snippets/main.html
+
+Add main.css file in blog->static->blog->main.css copied from https://github.com/CoreyMSchafer/code_snippets/blob/master/Django_Blog/snippets/main.css
+
+
+Now we are going to work on Admin page of the project. To create an admin related stuffs, we need to have
+some database created with some auth related tables. That can be done using the migration command.
+If we run 'python manage.py createsuperuser' it will throw us error saying no such table:auth_user.
+So we need to run the 'python manage.py makemigrations' which checks if we did any db changes right now.
+It won't find anything for now as we did not do any changes. So let's create some initial database changes
+using the command 'python manage.py migrate' to create that auth_user table. Now run the command to create
+the super user and give all he details. This is done in terminal.
+
+The most useful part of using Django is the database part because you will be using the same code with only
+changes in the settings file to use the Django in multiple SQL server types so it be sqllite for dev and
+postgreSQL for prod. as Django uses it's own ORM(object Relational Mapping) so all the changes in database type
+does not matter that much.
+
+So as Django used ORM so we can represent the db structures as classes and here the classes are represented as
+models. 'models.py'
+
+Django has provided us an admin module database tables and models in which we can create our classes. So
+each classes will be treated as tables And attributes inside the class will be treated as field of table in DB
+
+after any changes made to the database in the code part, if you want them updated inside your database, you
+need to run the migrate command but using the migrations command first 'python manage.py makemigrations'
+will update the migration details in your app. migrate command will create the model in your database along
+with the updated details. It will also show you the location(blog\migrations\0001_initial.py)
+where it migrated after migrations command executed. This is done in terminal.
+
+So to see the SQL codes which are being created at the background while we were creating the models, we can
+use the command 'python manage.py sqlmigrate appname migrationnumber ' (from the above migration detail )
+the command will look like this 'python manage.py sqlmigrate blog 0001'. Now if you run the migrate command
+the changes will take place in actual database. This is done in terminal.
+
+The below items are done in terminal.
+If we want to do some operations on the database using the Django objects we can do that using the Shell.
+command for Shell -> python manage.py shell. We can import the Django objects here using the shell. Once we
+import the tables/models from django we can operate some operations on them. Like we can give a command like,
+User.objects.all() -> To show all the objects inside the User model/table.
+User.objects.first() -> returns the first user in the model
+User.objects.filer(username = 'Soumya') -> returns the filtered queryset value
+User.objects.last() - > returns the last data in the model
+User.objects.filer(username = 'Soumya').first() - >returns the filtered value only from the queryset
+user = User.objects.filter(username = 'Soumya').first() -> Capture the value in a variable
+So once you capture the value of the user you can perform some rules on it like,
+user.id -> To print the value of Id for that particular user
+user.pk -> As the id is the primary key, we can also get the id value like this also
+Also we can capture a user according to his id, like this 'user = User.objects.get(id=1)
+
+
+This is done in terminal.
+Then when we query our Post table/model we did not find any record. Let's create a post.
+post1 = Post(title = 'Blog 1', content = 'First Blog Post!!', author = user)
+save it to table.
+post1.save()
+after the save, one post has been inserted into our Post model
+
+This is done in terminal.
+Now let's see how we can get all the posts written by a specific user where user is our variable
+containing the author name, we can use user.post_set.all()
+If we want to use the same author to create another Post, we can simply write the following
+user.post_set.create(title = 'Blog3', content = '3rd Blog!') and no need to specify the author as Django
+already knew from the syntax that you wanna create the Post for same author as user variable.
+
+
+Now instead of dummy data we are going to have he data coming from the models we created now. So we are going
+to make changes in views.py file.
+
+While creating the user registration page we are going to take up the logic that that will have a separate
+context all together, separate templates,forms, routes etc.. Logically that is going to be separate from Blog
+app. We are going to create a new app 'users' separate from the blog app.
+
+
+So according to the rule, we are going to add the class UsersConfig from apps.py file of users app to the
+settings.py of our main project django_first_corey
+
+Now we are going to create a user registration page but luckily Django has its own user registration form
+created we only need to import it. Also we can create our own user registration page as well. So let's
+navigate to our views.py page and create it.
+
+Now we have done some modifications inside our register.html. One last thing is the urls, we can create the
+urls.py as for this app as well as we had created for blog app. but this time we are going to directly
+import the views.py of users app and we are going give a route name to it. So see the urls.py file of our
+main project django_first_corey
+
+Now that we have created a simple form but if we enter any data inside the form and hit submit, since we use
+POST when we created the form, when we submit the data, the POST data needs to be stored somewhere, since
+we did not do anything about the POST data it simply rendered to the route method. So we are going to make
+an experiment if the data we are submitting in the form is valid GET data or POST data. So we will be using
+the functionality of using Flash Messages.
+
+Now we are going to return valid data if the data returned is a POST data and if it's a GET request we won't
+do anything.
+
+These below are the types of flash messages we have in Django
+messages.debug
+messages.info
+messages.success
+messages.warning
+messages.error
+
+Again we are going to put these flash messages inside the base.html page, so that any messages from Flash
+will show up.
+
+form.save() is being used to save the form data into the desired users list. After this we can see the user
+is created in the admin page. But we can see that the email field is missing, so every time we are not
+going to create his email from the backend. So let's add up some more fields in the form. So here we are
+not creating any levels in the form, they were pre created so if we want anything to add we need to add them
+to the form itself from where it's being called. So we will create a new form with the additional fields
+which inherits the old form.
+
+Once you create the new form again, inherit the new form inside the views.py of users app
+
+Now to make our web page a little good looking we are going to user a third party Django style creator which
+is known as 'django-crispy-forms' so we are going to install that and make sure to add that in the settings
+page of your project-. installed_apps and add CRISPY_TEMPLATE_PACK = 'bootstrap4' at last of this settings.py
+Now you need to load Crispy in your register.html page to use it.
+
+To login and logout controls Django provides some views which we need to import inside our main project
+'urls.py'. The LoginView and LogoutView are the default classes provided by Django to control the logic behind
+login and logout but we need to create the templates for those two and tell Django the path in order to look
+for them in the mentioned folder. That path we can give as argument in as_view() inside 'urls.py'
+
+href="{% url 'login' %}" is used to send redirect to a different page when user clicks it. So when we are
+done setting up the login and logout pages, while trying to login with correct username and password we
+see that we are redirecting to Django defined Profile page which is not there. So we have to make some
+changes in the settings file in order to avoid the redirection to system defined page rather than to our
+redirection page. So we are going to add at last of settings as "LOGIN_REDIRECT_URL = 'blog-home'" as we
+wanted them to see the blog page once they are logged in. Similarly do the stuffs for log out as well.
+
+So now that we are done with the login and logout page, now we will do some modification to our Sign Up page
+so that when users are successfully registered in the sign up page, redirect them to login page again.
+
+Now we are going to change the navigation bar to change the status i.e. if the user is logged in, then there
+should be a 'log out' button and other functionality also  work in the navigation bar.
+
+Now we are going to set up the logged in user's profile to send him to his profile according to the posts he
+has written. So we are going to create profile.html in users app. And we are going to create another view
+inside user app's views directory. Tp view this profile page a user needs to be logged in first so we are
+gonna use Django provided 'Login required Decorator'
+
+http://127.0.0.1:8000/login/?next=/users/profile/, here in this link the next=/user/profile means that you
+will be redirected to the profile page as last time you were trying to access that, once the login is
+completed.
+
+Now we will see how can we add profile picture functionality for user and some additional functions. For
+this we need to add a new model inside our models.py file of users app. So first of all we are going to import
+the User model of Django. This profile picture thing and the user has OneToOne relationships so we are
+going to establish that by using the OneToOneField() of models.
+
+Remember every time we are doing some changes we need to do some changes for database as well because models
+will be created in DBs as well but they will only be created when we will migrate them. So if you will directly
+run the python manage.py make migrations then it will throw you the error stating unavailability of Pillow.
+Pillow is a library in Python which works for images. So we need to install Pillow first by using
+"python -m pip install Pillow". Once this is installed run the migration command again. And it will show
+you the details of application what needs to be migrated. Now run "python manage.py migrate" to commit
+changes in DB.
+
+Now you need to register that model in your admin page of the application in order to make it available in
+Admins portal of your application. Now we can see that profiles has been added in Admin page of Django.
+
+Let's see some details regarding the profiles in our shell. Open the shell as python manage.py shell
+Now import the Django models.user. Below are the commands which will give you the details regarding the
+Profile which is created.
+from django.contrib.auth.models import User
+>>> user = User.objects.filter(username = 'Soumya').first()
+>>> user
+<User: Soumya>
+>>> user.email
+'ranjanjenasoumya@gmail.com'
+(To find the profile of the user see the below command, it returns what we told it to return in models.py)
+>>> user.profile
+<Profile: Soumya Profile>
+>>> user.profile.image
+<ImageFieldFile: profile_pics/soumya.jpg>
+>>> user.profile.image.width
+402
+>>> user.profile.image.height
+520
+(To find the path where the profile picture is stored see the below command)
+>>> user.profile.image.url
+'profile_pics/soumya.jpg'
+
+
+Now we are going to change the directory path where the profile pictures has been stored. To do this we are
+going to make some changes in the settings.py files and add the following commands
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') -> This will join the base directory of our project and will
+add up a new directory called as 'media' and will store all those profile pics inside this
+MEDIA_URL = '/media/' -> Whenever we will try to access the pics that we uploaded it's going to fetch this
+directory to get us the picture.
+Now if we run the project and delete the earlier created profiles and then create new profiles, we will be
+able to see the new directory 'media' created inside our base directory and profile picture is being stored
+inside a directory called 'profile_pics'
+
+Now let's add these details to our self created Profile page, to display their name, email address, profile
+pic and ability to edit them. Now we are going to replace Corey's profile.html code in out created profile.html
+https://github.com/CoreyMSchafer/code_snippets/blob/master/Django_Blog/snippets/profile.html
+for good look and feel.
+
+<img class="rounded-circle account-img" src="{{ user.profile.image.url }}">
+        <div class="media-body">
+          <h2 class="account-heading">{{ user.username }}</h2>
+          <p class="text-secondary">{{ user.email }}</p>
+ADDED THESE DETAILS ACCORDING TO WHAT WE SAW IN THE SHELL TO POPULATE THE SAME RESULT
+
+
+Now in order to get this to work we need to add this media as route in urls.py of our project. How to do
+that is being described here 'https://docs.djangoproject.com/en/2.2/howto/static-files/#serving-files-uploaded-by-a-user-during-development'
+
+
+Now the task is to create a profile of the user when the user registers himself. So this can be done using
+the Signals technique of Django where there will some method known as post_save which will save the things
+when it's being sent from the URL, the sender we need to specify in this case sender is the user and also
+we need to specify the receiver as well. In this case the receiver is the database. So let's import some
+modules to get this working in our newly created signals.py file in our users app.
+from django.db.models.signals import post_save
+from django.contrib.auth.models import User
+from django.dispatch import receiver
+from .models import Profile -> Need this because we are going to apply these on profiles
+
+We have also included the below codes. Which tells that, once the user is saved(sender=User), give a signal
+(post_save) . Then this decorator of receiver will implement the create_profile function according to the
+received objects from the 'sender=User'
+@receiver(post_save, sender=User)
+def create_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+
+Now do some changes in apps.py, to import the signals inside ready function
+    def ready(self):
+        import users.signals
+
+Now that our User profile picture has been set, now we are going to create some functionality over there
+to help user updating his profile and we are going to set auto size of the images as well. For that we are
+going to create another form for profile as well inside our forms.py
+
+Now we created two forms in forms.py UserUpdateForm and ProfileUpdateForm. Now lets add them in views.py in
+user app. Now copy the form from register.html and place it in profile.html and we will modify the content
+of the form in such a way that we can accommodate both the forms into one. enctype="multipart/form-data"
+is being used to encode the image to store in the db safely and get the image safely.
+
+Now we are adding instance= request.user and instance= request.user.profile inside our views.py which we
+basically do so that the current logged in user can see the details of his name and email when he is going
+to update them rather than seeing a blank page. Once the code changes are completed, to save the changes
+we need to check the form validation then we need to save them.
+
+Now we will automatically resize the pics users will be uploading. Pkg required - Pillow. Im models.py we
+added these
+    def save(self):  # This is a save class which we are overriding of parent class
+        super().save()  # We are doing this to save the super class save
+
+        img = Image.open(self.image.path)
+
+        if img.height > 300 or img.width > 300:
+            output_size = (300, 300)
+            img.thumbnail(output_size)
+            img.save(self.image.path)
+
+Now we will be working on creating, updating and deleting posts by users. So create all these django
+provides some generic views which needs to be imported and then we will create classes for the views. We
+have changed the Home page view as path('', PostListView.as_view(), name='blog-home') because of the list
+views we want. Also we need to do some changes in the blog/views.py as well in order to set the view page
+for our new class.
+
+After all the changes we have done to show the ListViews, now let's edit them to show them as per the
+recent modified date rather than the old post first view. Which can be done by using of a simple attribute
+ordering = ['-date_posted']. Inside PostListView we have written multiple lines of codes because we didn't
+wanted to use the general conventions of Django. Let's do it for our views which we will be creating for
+our individual posts which will be importing the Django default view of DetailView
+
+Let's create a template post_detail.html which the Django will expect in order to run the class based
+view.Now we will change all the 'post' to 'object' as Django expect all the object as the context.
+
+Now let's add the links to individual posts.We set 'href="{% url 'post-detail' post.id %}"' inside the
+home.html. So now we have created a list view as well as a detailed view. Next let's focus on
+creating new posts, update and delete views as well.
+
+Now we did all the required changes for our CreateView, now let's create a template for this view, as it
+is going to share with the update view, let's create a template named as modelname_form.html which
+actually Django expects so that it will add up it's own feature to it. So the fomr which we are creating
+post_form.html. Copy the register form from the users app and paste it here and make some changes.
+
+THE CONCEPT OF CLASS BASED VIEW ARE SO POWERFUL THAT WE ARE ONLY GOING TO TELL DJANGO THAT WE ARE
+GOING TO USE THE CLASS BASED VIEW AND DJANGO TAKES CARE OF THE FORM DETAILS TO SHOW UP.
+
+Now after some changes we can see the post/new that create post form is ready. But it's not ready
+because we did not implement till now that the logged in user should be treated as the author of that
+newly created blog. So let's do that now by overriding the form_valid method
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+Once we have created this one, this will set the author but the Django will throw an error because
+it does not know where to go after the create post is completed. It will be expecting a get_absolute_url
+method. Which we are going to provide in our model.
+ def get_absolute_url(self):
+        return reverse('post-detail', kwargs={'pk': self.pk})
+
+
+from django.contrib.auth.mixins import LoginRequiredMixin this is used to add redirect to login page
+if user is not logged in but trying to access the post/create page and add that LoginRequiredMixin
+as an argument of the classview.
+
+Now let's create the update view. the update view is going to be modified according to the primary key
+ids, so we have kept pk in 'path('post/<int:pk>/update/', PostUpdateView.as_view(), name='post-update')'
+and no need to create another template as it's going to use the same template as of CreateView
+
+Now we are able to update the post but the catch here is the logged in user can also update the post
+of another user which should not be the case. So let's create another mixin which would prevent that.
+We have added that mixin UserPassesTestMixin as an argument. And written the following test_fun to
+analyze the logged in user and forbid him to update other's post.
+   def test_func(self):  # this will prevent any user update other's post
+        post = self.get_object()
+        if self.request.user == post.author:
+            return True
+        return False
+
+Now let's see how the delete functionality works. The delete post view will be similar to the detail
+view post but we need to have the template related to delete which gonna ask us if we are sure to
+delete the post."post_confirm_delete.html" is the template page which the Django will be looking for.
+
+Now we will see how pagination is being done inside Django
+from django.core.paginator import Paginator -- import the Paginator class
+>>> posts = ['1','2','3','4','5']   -- Created a posts list having 5 objects
+>>> p = Paginator(posts,2)          -- Idea is to keep 2 posts in each page, so we should get 3 pages
+>>> p.num_pages
+3
+>>> for page in p.page_range:
+...     print(page)
+...
+1
+2
+3
+>>> p1 = p.page(1)
+>>>
+>>> p1
+<Page 1 of 3>
+>>> p2 = p.page(2)
+>>>
+>>> p2
+<Page 2 of 3>
+>>> p1.number
+1
+>>> p1.object_list
+['1', '2']
+>>> p1.has_previous()               -- Since p1 is the first page, it should not have any previous page
+False
+>>> p1.has_next()
+True
+>>> p2.has_previous()
+True
+>>> p2.has_next()
+True
+>>> p1.next_page_number()
+2
+
+We did the below changes inside our views for PageListView as that is termed as the home page where
+all the posts are visible right now.
+paginate_by = 2  # This will work for pagination
+Now let's add some changes inside home.html regarding the pagination
+
+Now we will proceed to perform some operations on the names of author that is visible on the posts.
+Currently they are the dead links. We are going to display the posts only done by that user. And if
+there are a bunch of posts by that user, we are going to paginate that also.
