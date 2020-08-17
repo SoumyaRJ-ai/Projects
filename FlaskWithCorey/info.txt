@@ -1,0 +1,349 @@
+{% %} ---> Represents the code box inside html file
+
+{{ }} ---> Represents the variable inside the html tag
+
+Generate secret key like the below to be used only inside our application to keep safe our forms from cross site requests,
+modifying cookies and forgery attacks
+>>> import secrets
+>>> secrets.token_hex(16)
+
+{{ form.hidden_tag() }} --> This tag is used for CSRF(cross site request forgery) token addition to a form.
+
+When ever we are using "(url_for('home'))" that means we are calling the 'home' function not the route. Applies to each
+of the cases where url_for is called.
+
+
+flash(f'Account created for {form.username.data}!','success') ---> The second argument here is for the category of the
+flash message. "with messages = get_flashed_messages(with_categories=true) " --> This is the variable we wanted to put
+in our layout.html because we wanted to show up this flash message inside every pages. get_flashed_messages is the
+function to grab the messages from called files and with_categories=true will tell us to grab the category of the flash
+message as well.
+
+
+Install flask/-alchemy, which will be used for communication with the database. This is a Flask based ORM which will
+help us communicating with database objects like class objects. Use of this one will help us working with different dbs
+without much changes in Python codes.
+
+One more important thing is that whenever we are creating a model the corresponding tables will also be created but
+with a name similar to model name but starting with a lowercase, i.e. when we created a model 'User', the table name
+in SQLAlchemy is 'user' and When we created a model 'Post', the table created is 'post'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db' --> Means we are going to create a site.db database inside
+our project directory itself(/// represents the current project directory)
+
+The good thing of using SQLAlchemy is that it represents the database structure as classes. Those classes will be called
+as models. Each classes we will create is going to be a table in the db.
+
+posts = db.relationship('Post', backref='author', lazy=True) --> This will establish a relationship with Post table, and
+the backref is backend reference i.e. whenever a new post is created, author column will be created in Post table.'lazy'
+is being used so that SQLAchemy will load the data in one go.
+
+
+Let's see how we are going to create db, create tables and insert data inside the tables and query them
+
+db.create_all() ---> This command we run in the Python terminal to create database 'site.db' in our existing project folder
+as a new file as we are creating sqlite database so file is created.
+>>> from flaskblog import User,Post
+>>> user_1 = User(username='Soumya',email='srj@gmail.com',password='password')
+>>> db.session.add(user_1)
+>>> user_2 = User(username='Lenka',email='al@gmail.com',password='password1')
+>>> db.session.add(user_2)
+>>> db.session.commit()
+>>> User.query.all()
+[User('Soumya','srj@gmail.com,'default.jpg'), User('Lenka','al@gmail.com,'default.jpg')]
+>>> User.query.first()
+User('Soumya','srj@gmail.com,'default.jpg')
+>>> User.query.filter_by(username='Lenka').all()
+[User('Lenka','al@gmail.com,'default.jpg')]
+>>> User.query.filter_by(username='Lenka').first()
+User('Lenka','al@gmail.com,'default.jpg')
+>>> data = User.query.filter_by(username='Lenka').first()
+>>> data
+User('Lenka','al@gmail.com,'default.jpg')
+>>> data.id
+2
+>>> user = User.query.get(2)
+>>> user
+User('Lenka','al@gmail.com,'default.jpg')
+>>> user.posts
+[]
+>>> post_1 = Post(title='Blog1',content='First Post Content!', user_id = user.id)
+>>> post_2 = Post(title='Blog2',content='Second Post Content!', user_id = user.id)
+>>> db.session.add(post_1)
+>>> db.session.add(post_2)
+>>> db.session.commit()
+>>> user.id
+2
+>>> user.posts
+[Post('Blog1','2020-07-28 15:41:11.230727'), Post('Blog2','2020-07-28 15:41:11.233007')]
+>>> for post in user.posts:
+...     print(post.title)
+...
+Blog1
+Blog2
+>>> for post in user.posts:
+...     print(post.author)
+...
+User('Lenka','al@gmail.com,'default.jpg')
+User('Lenka','al@gmail.com,'default.jpg')
+>>> db.drop_all()  ---> This will deop all the database structure including the rows and tables.
+
+
+We will be making all the flask application into a single package and run it rather than running them as different modules
+Let's see how can we do that. Earlier we were keeping all those database related models inside our mail .py file because
+all the imports becomes a headache sometimes as they behave like a circular imports and creates a deadlock situation. So
+now separate them and see what happens, (the video related to this has been downloaded. Go through it Part-5)
+
+
+Here we were trying to run the flaskblog.py as the main method was there, so now we are not going to use one file as a
+start up rather we will convert the whole things into a package and and run it. For this we need to have an __init__.py
+file in place, so that Python will know where to look for.
+
+__init__.py is the file where we need to initialize our application and bring together different components. We need to
+import all the routes in __init__.py because when the app rubs, it finds out the routes.
+
+
+In order to use a hash algorithm to hide all those passwords in our website, we need to encrypt them which is done easily
+by flask by installing a package called 'flask-bcrypt'. Need to install it before using it.
+pip install flask-bcrypt
+
+>>> from flask_bcrypt import Bcrypt
+>>> bcrypt = Bcrypt()
+>>> bcrypt.generate_password_hash('testing')
+b'$2b$12$ghHKvFG7zRdyfGyWLPLQ3.dAIXRm2yaXPV4hgTnanyp81qKY07FrC'  --> b specifies bytes here
+>>> bcrypt.generate_password_hash('testing')
+b'$2b$12$rmfe5e12/J7UGrw2XpaKDuvAvCGX86Bzxj.g.Q0Z02VINxMEZfc1i'
+>>> bcrypt.generate_password_hash('testing').decode('utf-8')   ---> representing password in strings rather than bytes
+'$2b$12$XEUu.5p9L3tLYgqmO9rYpOMqcSpMMvRoR.DeH/pBwEELgoTwbrtA2'
+>>> bcrypt.generate_password_hash('testing').decode('utf-8')
+'$2b$12$h0Y9XkaJ5hloEi9Vuvd4reNe8BTsnVHY3V/sA1ezE2ZDjgCPvIwEa'
+>>> hashed_pw = bcrypt.generate_password_hash('testing').decode('utf-8') -->Generate and store hashed password in a variable
+>>> hashed_pw
+'$2b$12$nMJOAvbfqr3ncg70cbzSjOMFAG6Iu.Diru5dYUqTDxOvMVZxRMtxO'
+>>> hashed_pw
+'$2b$12$nMJOAvbfqr3ncg70cbzSjOMFAG6Iu.Diru5dYUqTDxOvMVZxRMtxO'
+>>> bcrypt.check_password_hash(hashed_pw,'password')  --> check with the hashed password with the given password
+False
+>>> bcrypt.check_password_hash(hashed_pw,'testing')
+True
+>>> bcrypt.check_password_hash(hashed_pw,'Testing')
+False
+
+
+Now in order to validate if the username or email provided by the user during registration is unique or not, we need
+to write a custom query who will keep track of checking that. So let's write our custom checks in forms.py. This custom
+validation has been provided by the wtforms which will run during the form validation check.
+def validate_field(self,field):
+    if True:
+        raise ValidationError('Validation Message')
+
+
+Now we have created a good registration page with all types of validations. So now let's create some functionality for
+login pages so that users can login and logout as per the need. The Loginmanager functionality from Flask works with the
+database models which will take care of the functionality in the sessions all by itself.
+
+For reloading user from user session through their IDs we are going to use User_Loader method. This loader function works
+as an extension and need some specific attributes inside the model classes. This attributes are being provided by the
+UserMixin class. We just need to import it and this extensions will help us to manage our SESSION for that particular
+user as the user will be searched with the UserID.
+
+
+The login_user function is used by Flask to login user inside our website. Then Flask will take care of the logged in
+users.
+
+If we are redirected from a particular page due to no access, make sure we are landing in the same page after authenticating
+ourselves. This is where this next_page functionality comes to picture
+next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('home'))
+
+
+We need a form for each user which logs in to the website because they might need to update their username or set a custom
+profile picture. So let's create one inside the forms.py
+
+When we enter to our Account page, we must see the username and password in the labels already, so that if we want to do
+an update we can directly do from that. If we are sending some thing from our website to our code then that's a POST
+request, and if we are only seeing the data, then that's a GET request.
+
+
+We use enctype="multipart/form-data" inside our form because we need to use the image field with out any disturbances.
+
+In order to save our updated picture in our account to our database, we are going to save the picture file with secret
+name rather than saving it with it's actual name.So we are going to use the import secrets here and to grab the extension
+of the file uploaded by the user, we are going to use the import os module.
+
+
+app.root_path --> Will give us the path all the way up to the package directory.
+random_hex = secrets.token_hex(8) --> Creating a variable 'random_hex' which will keep our secret file name of 8 bits
+os.path.splitext(form_picture.filename) --> returns two values i.e. the file name and the extension that's why we stored
+file name in one variable '_' which we don't want to use and another variable to store the extension
+
+
+To scale down the size of the image we can use the module named as PILLOW. pip install Pillow. Then we can import the
+Image class from the PIL library.
+
+Now we are going to give the user the ability to create new posts. So we are going to get a new form with all those details
+which we want to work with
+
+
+post.date_posted.strftime('%Y-%m-%d') --> strftime used to format datetime objects and we can find many formatting style
+after a search in the Google.
+
+To update/delete a particular post inside the home page of the user we need to have a route and flask gives us an option
+to create route on something which is already a part of the database like the post_ids.
+ E.g.
+ @app.route("/post/<int:post_id>") --> Here we are grabbing the post ids in our route so that we can edit/delete a
+ specific post. <> symbol is used to embed an id inside the route. 'int' is provided because we want to specify that
+ the field will be an integer.
+
+Post.query.get_or_404(post_id)  --> Means that give me the details where post id exists else give a 404 which means page
+does not exist.
+
+
+Whenever we add something new to database at that time we need to use db.session.add(NewObjectToAdd) and then commit. But
+when we are updating something then no need to add directly we can make commit() to run rather than adding the post again.
+
+
+The functionality for Update and delete a specific post by the user would be kept inside the post.html so that everything
+can be managed at one place.
+
+
+To display the delete functionality as a button we have used the functionality of MODAL in bootstrap.
+"https://getbootstrap.com/docs/4.1/components/modal/"
+
+
+These are the commands provided by Flask SQLAlchemy to deal with Pagination
+posts = Post.query.all() ---> This was used to save all the details about the posts we have
+posts = Post.query.paginate() ---> By default pagination happens with per page 20 items
+posts.page  --> To check in which page you are in
+posts = Post.query.paginate(per_page=5)  ---> To customize the number of posts you want to see in each page
+posts = Post.query.paginate(per_page=5,page=3)  ---> To customize the number of posts you want to see in 3rd page
+posts.per_page ---> You can see the how many posts per page is there may be default one or customized one
+
+
+page = request.args.get('page') ---> This will give us the query in which page we are in
+ posts.iter_pages()  --> This iterates through the pagination pages and gives None, when it skips some of the pages to
+ show other bunch of pages. That in our code we represented as ...
+
+posts = Post.query.order_by(Post.date_posted.desc()).paginate(page=page, per_page=5)  ---> Ordering posts wrt date_posted
+in descending order with pagination in place.
+
+
+Now we need to create a user route in order to see the posts posted by the specific user if the username is being clicked
+on the websites.
+
+
+The idea of resetting password for the users:
+1. Users will be moved to a different form to enter their email after being logged out from the current page
+2. Once they submit the email. we will grab the user from the backend.
+3. Then we will send a mail to the user with a token.
+4. The token is something which is generated  through our code using the "from itsdangerous import
+TimedJSONWebSignatureSerializer"
+5. Then we do all those stuffs to generate a token with giving our user id of the requesting user inside the token. This
+is where that 'get_reset_token' comes to picture to grab the token.
+6. We use that mail functionality to send this token to the user. Once the user click on the token, it uses the 'loads'
+method to match the user_id. Then the user changes the password and all works as it is.
+7. Sending mail takes up quite work in the __init__ file to set all attributes. Also this needs your valid gmail account
+to send mails as well as needs the less secure app access to set to 'OFF'. So that mails can be triggered from
+gmail using the localhost server configurations.
+
+send mail functionality --> pip install flask-mail
+
+
+Now we will see how to use the Flask blueprint to separate out functions of different components in to different packages
+so that it won't be a difficult task to find out what we are looking for. The same has been downloaded and can be watched
+again.
+
+
+So we are going to create packages inside our project package, and those packages will be named according to the
+functionality they are responsible for.
+
+
+For Python to know that that's a package, there should be one __init__.py file inside the package.
+
+So basically we are creating blueprints which are noting but the route manager from each of the routes.py for every
+package we created according to their specific purpose.
+Now we need to change everything to update all the imports to the specified new packages and also need to change the
+url_for() with their blueprint names where all of the routes are present.
+
+
+Now we are going to remove that 'app' variable and instead will use the create_app function in order to initialize the
+application run. Also we need to make some changes where we use this 'app' variable which was initializing the Flask app
+db = SQLAlchemy()
+bcrypt = Bcrypt()
+login_manager = LoginManager()
+login_manager.login_view = 'users.login'
+login_manager.login_message_category = 'info'  # Bootstrap class 'info'
+mail = Mail()
+these are the extensions we are using in the application but we can't include them inside the create_app function
+because they don't need to be bound to the application every time the application initializes, we need to call them
+differently in order to access their requirement. So we need not to include them inside Create_App function. Instead
+ww will use the init method to pass the application to all of those extension to let them work as per our need.
+
+
+
+Now that we are done with designing our blueprints, we will now see how we can add a new blueprint object with out any
+hassle when we will design the custom error page and add this functionality to wherever required.
+
+So we are creating a new package called 'errors', inside that handlers.py will be working as route.py for other packages
+"return render_template('errors/404.html'), 404" ---> In this we have passed another argument 404 which is the status
+code and by default has been set to 200, so we don't mention these.
+
+Once we are done with adding the routes in handlers, and creating html pages for our custom errors, now like other
+blueprints we need to register them as well.
+
+
+Now it's time for deployment. We are working with Linode Linux server to learn deploying the flask application in to a
+LINUX server. All those details can be found in the downloaded video from Corey which is the complete beginner
+explanation starting from creating Linode server to end of the deployment. DO watch multiple times to get proficient
+how the deployments work on a Linux server for Flask application.
+
+
+
+To start deploying we need the requirements.txt file which explains all the package details that has been used in the
+application so that versioned packages will be deployed in the server as well. We can create a requirements.txt file
+from the terminal here by doing "pip freeze > requirements.txt". This will list down every packages to requirements.txt
+file.
+
+Now our main task is to copy the project folder from our machine to the server. So we tried running the below command
+"scp -r Desktop/FlaskWithCorey soumyarj@139.162.50.202:~/" from our pycharm terminal but failed. So in ubuntu bash, i
+moved to the specific folder and copied them to the server using the same command.
+
+Now once the files are copied, we need to have our own virtual environment in server rather that using the Linode
+provided. So follow the video to see how this is done.
+
+
+You need to use "source venv/bin/activate" command after getting inside your project directory in order to set the
+virtual environment.
+
+nginx and gunicorn are the two required applications inside the Linux servers which needs to be added to the server
+in order to handle the application in production system with much improved traffic. 'nginx' is basically used for
+handling static files like css, javascript of our project where as the python files will be handled by 'gunicorn'
+
+
+
+sudo systemctl restart nginx ---> to restart a server in bash
+sudo ufw allow https/tcp ---> Allowing a port in server firewall
+sudo ufw delete allow 5000 ---> Deleting an existing rule from firewall of the server
+nproc --all ---> To find out how many cores our server is using
+According to the cores, the number of workers provided will be (2*no.of_cores)+1 The worker processes are responsible
+for handling requests and returning a response to the client inside gunicorn.
+
+Now we need to run the gunicorn to handle the python files
+gunicorn -w 3 run:app ---> This needs tobe run inside your project directory, 'w' specifies workers, 3 specifies the
+number of workers, 'run' is the our starting application and 'app' is the variable used inside our starting application
+
+Now after running the above command, we should be able to browse our site by our given IP address '139.162.50.202'
+
+But this is not ready to go to production yet as we have it keep it running inside our bash to let it work. but we
+need to implement something which will take care of all those traffic/crashing/restart/'keep it open' functionality.
+So we need to use 'supervisor'
+sudo apt install supervisor
+Once this is installed we need to make changes to the config file by doing below
+sudo nano /etc/supervisor/conf.d/flaskblog.conf
+
+
+Automatically nginx has it's functionality to diable uploading of pictures size more that 2MB. We can change it by
+doing the following work
+go to --->  sudo nano /etc/nginx/nginx.conf
+and include 'client_max_body_size 5M' inside basic settings and do a restart of nginx server by
+doing "sudo systemctl restart nginx"
